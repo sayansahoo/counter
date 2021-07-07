@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo, useEffect } from "react";
 
 const useStyles = ({ counter }) => ({
   counterBox: {
@@ -70,14 +70,50 @@ const Counter = ({ MAX = 1000, MIN = 1 }) => {
     setCounter(value);
   };
 
-  const onAdd = () => {
-    if (+counter >= MAX) return;
-    setCounter(+counter + 1);
+  useEffect(() => {
+    const func = async () => {
+      const res = await apiCall(true);
+      setCounter(res);
+    };
+    func();
+  }, []);
+
+  const apiCall = async (flag, body) => {
+    const url1 = ` https://interview-8e4c5-default-rtdb.firebaseio.com/front-end/counter1.json`;
+    const url2 = `https://interview-8e4c5-default-rtdb.firebaseio.com/front-end.json`;
+    const url = flag ? url1 : url2;
+    const response = await fetch(url, {
+      method: flag ? "GET" : "PUT", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, *same-origin, omit
+      headers: {
+        "Content-Type": "application/json",
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      ...(body ? { body: JSON.stringify(body) } : undefined),
+      redirect: "follow", // manual, *follow, error
+      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url// body data type must match "Content-Type" header
+    });
+    return response.json();
   };
 
-  const onSubstract = () => {
+  const onAdd = async () => {
+    if (+counter >= MAX) return;
+    setCounter(+counter + 1);
+    const body = {
+      counter1: +counter + 1,
+    };
+    await apiCall(false, body);
+  };
+
+  const onSubstract = async () => {
     if (+counter <= MIN) return;
     setCounter(+counter - 1);
+    const body = {
+      counter1: +counter - 1,
+    };
+    await apiCall(false, body);
   };
 
   return (
@@ -100,4 +136,4 @@ const Counter = ({ MAX = 1000, MIN = 1 }) => {
   );
 };
 
-export default Counter;
+export default memo(Counter);
